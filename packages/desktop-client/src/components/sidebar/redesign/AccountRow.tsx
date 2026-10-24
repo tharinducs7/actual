@@ -15,6 +15,7 @@ import { css } from '@emotion/css';
 
 import { useReopenAccountMutation, useUpdateAccountMutation } from '#accounts';
 import { isAccountFailedSync } from '#accounts/syncStatus';
+import { AccountLogo } from '#components/accounts/AccountLogo';
 import { useContextMenu } from '#hooks/useContextMenu';
 import { useUpdatedAccounts } from '#hooks/useUpdatedAccounts';
 import { openAccountCloseModal, pushModal } from '#modals/modalsSlice';
@@ -71,6 +72,19 @@ export function AccountRow({
         name: 'account-rename',
         text: t('Rename'),
         onClick: () => setIsEditing(true),
+      },
+      {
+        name: 'account-logo',
+        text: t('Change logo'),
+        onClick: () =>
+          dispatch(
+            pushModal({
+              modal: {
+                name: 'account-logo',
+                options: { accountId: account.id },
+              },
+            }),
+          ),
       },
       isClosed
         ? {
@@ -192,9 +206,20 @@ export function AccountRow({
                   />
                 </InitialFocus>
               ) : (
-                <Text style={{ flex: 1, ...styles.ellipsisText }}>
-                  {account.name}
-                </Text>
+                <View
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: spacing.xs,
+                  }}
+                >
+                  <AccountLogo logo={account.logo} name={account.name} />
+                  <Text style={{ flex: 1, ...styles.ellipsisText }}>
+                    {account.name}
+                  </Text>
+                </View>
               )}
               <Text style={styles.visuallyHidden}>{statusLabel}</Text>
               <SidebarBalance

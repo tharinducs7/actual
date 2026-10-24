@@ -21,6 +21,7 @@ import type { AccountEntity } from '@actual-app/core/types/models';
 import { css, cx } from '@emotion/css';
 
 import { useReopenAccountMutation, useUpdateAccountMutation } from '#accounts';
+import { AccountLogo } from '#components/accounts/AccountLogo';
 import { BalanceHistoryGraph } from '#components/accounts/BalanceHistoryGraph';
 import { Link } from '#components/common/Link';
 import { Notes } from '#components/Notes';
@@ -32,7 +33,7 @@ import { useDragRef } from '#hooks/useDragRef';
 import { useIsTestEnv } from '#hooks/useIsTestEnv';
 import { useNotes } from '#hooks/useNotes';
 import { useSyncedPref } from '#hooks/useSyncedPref';
-import { openAccountCloseModal } from '#modals/modalsSlice';
+import { openAccountCloseModal, pushModal } from '#modals/modalsSlice';
 import { useDispatch, useSelector } from '#redux';
 import type { Binding, SheetFields } from '#spreadsheet';
 import { isTouchDevice } from '#util/isTouchDevice';
@@ -141,6 +142,21 @@ export function Account<FieldName extends SheetFields<'account'>>({
         text: t('Rename'),
         onClick: () => setIsEditing(true),
       },
+      account
+        ? {
+            name: 'account-logo',
+            text: t('Change logo'),
+            onClick: () =>
+              dispatch(
+                pushModal({
+                  modal: {
+                    name: 'account-logo',
+                    options: { accountId: account.id },
+                  },
+                }),
+              ),
+          }
+        : null,
       account?.closed
         ? {
             name: 'account-reopen',
@@ -253,6 +269,18 @@ export function Account<FieldName extends SheetFields<'account'>>({
                       defaultValue={name}
                     />
                   </InitialFocus>
+                ) : account ? (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      minWidth: 0,
+                    }}
+                  >
+                    <AccountLogo logo={account.logo} name={name} />
+                    <span>{name}</span>
+                  </View>
                 ) : (
                   name
                 )

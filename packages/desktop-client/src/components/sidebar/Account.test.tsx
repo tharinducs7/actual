@@ -116,6 +116,43 @@ describe('sidebar Account context menu', () => {
     fireEvent.contextMenu(screen.getByText('Bank of America'));
 
     expect(store.getState().contextMenu.isOpen).toBe(true);
-    expect(contextMenuItemNames()).toEqual(['account-rename', 'account-close']);
+    expect(contextMenuItemNames()).toEqual([
+      'account-rename',
+      'account-logo',
+      'account-close',
+    ]);
+  });
+
+  it('shows a custom account logo in the sidebar row', async () => {
+    const account = {
+      ...generateAccount('My bank'),
+      logo: 'data:image/webp;base64,logo',
+    };
+
+    const { container } = await renderRow(
+      <Account
+        name={account.name}
+        account={account}
+        to={`/accounts/${account.id}`}
+        query={bindings.accountBalance(account.id)}
+      />,
+    );
+
+    expect(container.querySelector('img')).toHaveAttribute('src', account.logo);
+  });
+
+  it('shows account initials when there is no custom logo', async () => {
+    const account = generateAccount('Bank of America');
+
+    await renderRow(
+      <Account
+        name={account.name}
+        account={account}
+        to={`/accounts/${account.id}`}
+        query={bindings.accountBalance(account.id)}
+      />,
+    );
+
+    expect(screen.getByText('BO')).toBeVisible();
   });
 });

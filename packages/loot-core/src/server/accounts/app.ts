@@ -95,15 +95,20 @@ export type AccountHandlers = {
 async function updateAccount({
   id,
   name,
+  logo,
   last_reconciled,
   account_group_id,
 }: Pick<AccountEntity, 'id'> &
   Partial<
-    Pick<AccountEntity, 'name' | 'last_reconciled' | 'account_group_id'>
+    Pick<
+      AccountEntity,
+      'name' | 'logo' | 'last_reconciled' | 'account_group_id'
+    >
   >) {
   await db.update('accounts', {
     id,
     ...(name !== undefined && { name }),
+    ...(logo !== undefined && { logo }),
     ...(last_reconciled && { last_reconciled }),
     ...(account_group_id !== undefined && { account_group_id }),
   });
@@ -117,6 +122,7 @@ async function getAccounts(): Promise<AccountEntity[]> {
       ({
         id: dbAccount.id,
         name: dbAccount.name,
+        logo: dbAccount.logo ?? null,
         offbudget: dbAccount.offbudget,
         closed: dbAccount.closed,
         sort_order: dbAccount.sort_order,
@@ -556,17 +562,20 @@ async function linkEnableBankingAccount({
 
 async function createAccount({
   name,
+  logo,
   balance = 0,
   offBudget = false,
   closed = false,
 }: {
   name: string;
+  logo?: string | null | undefined;
   balance?: number | undefined;
   offBudget?: boolean | undefined;
   closed?: boolean | undefined;
 }) {
   const id: AccountEntity['id'] = await db.insertAccount({
     name,
+    logo: logo ?? null,
     offbudget: offBudget ? 1 : 0,
     closed: closed ? 1 : 0,
   });

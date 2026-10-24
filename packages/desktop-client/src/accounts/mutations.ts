@@ -58,6 +58,7 @@ const dispatchErrorNotification = (
 
 type CreateAccountPayload = {
   name: string;
+  logo?: string | null;
   balance: number;
   offBudget: boolean;
 };
@@ -68,9 +69,15 @@ export function useCreateAccountMutation() {
   const { t } = useTranslation();
 
   return useMutation({
-    mutationFn: async ({ name, balance, offBudget }: CreateAccountPayload) => {
+    mutationFn: async ({
+      name,
+      logo,
+      balance,
+      offBudget,
+    }: CreateAccountPayload) => {
       const id = await send('account-create', {
         name,
+        logo,
         balance,
         offBudget,
       });

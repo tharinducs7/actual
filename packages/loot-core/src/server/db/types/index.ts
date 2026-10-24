@@ -8,6 +8,7 @@ type JsonString = string;
 export type DbAccount = {
   id: string;
   name: string;
+  logo?: string | null;
   offbudget: 1 | 0;
   closed: 1 | 0;
   tombstone: 1 | 0;

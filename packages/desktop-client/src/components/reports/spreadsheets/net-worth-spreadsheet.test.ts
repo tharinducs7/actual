@@ -36,6 +36,7 @@ function createAccount(id: string, name: string): AccountEntity {
   return {
     id,
     name,
+    logo: null,
     offbudget: 0,
     closed: 0,
     sort_order: 0,

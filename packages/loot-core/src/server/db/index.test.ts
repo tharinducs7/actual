@@ -30,6 +30,18 @@ async function getTransactions(latestDate) {
 // validated in the same event loop and it's same to not await)
 
 describe('Database', () => {
+  test('account logos are stored with the account', async () => {
+    const logo = 'data:image/webp;base64,logo';
+    const id = await db.insertAccount({ name: 'Bank', logo });
+
+    const account = await db.first<{ logo: string }>(
+      'SELECT logo FROM accounts WHERE id = ?',
+      [id],
+    );
+
+    expect(account).toEqual({ logo });
+  });
+
   test('all and first accept null params', async () => {
     await db.insertAccount({ id: 'foo', name: 'bar' });
 

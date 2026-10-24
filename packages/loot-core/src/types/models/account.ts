@@ -4,6 +4,7 @@ import type { BankSyncProviders } from './bank-sync';
 export type AccountEntity = {
   id: string;
   name: string;
+  logo: string | null;
   offbudget: 0 | 1;
   closed: 0 | 1;
   sort_order: number;
