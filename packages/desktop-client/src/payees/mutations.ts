@@ -114,3 +114,30 @@ export function useCreatePayeeMutation() {
     },
   });
 }
+
+export function useUpdatePayeeLogoMutation() {
+  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      logo,
+    }: {
+      id: PayeeEntity['id'];
+      logo: PayeeEntity['logo'];
+    }) => {
+      await send('api/payee-update', { id, fields: { logo } });
+    },
+    onSuccess: () => invalidateQueries(queryClient),
+    onError: error => {
+      console.error('Error updating payee logo:', error);
+      dispatchErrorNotification(
+        dispatch,
+        t('There was an error updating the payee logo. Please try again.'),
+        error,
+      );
+    },
+  });
+}

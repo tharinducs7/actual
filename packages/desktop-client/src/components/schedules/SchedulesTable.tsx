@@ -18,8 +18,13 @@ import {
 import { getNormalisedString } from '@actual-app/core/shared/normalisation';
 import { getScheduledAmount } from '@actual-app/core/shared/schedules';
 import type { ScheduleStatuses } from '@actual-app/core/shared/schedules';
-import type { ScheduleEntity } from '@actual-app/core/types/models';
+import type {
+  AccountEntity,
+  PayeeEntity,
+  ScheduleEntity,
+} from '@actual-app/core/types/models';
 
+import { AccountLogo } from '#components/accounts/AccountLogo';
 import { FinancialText } from '#components/FinancialText';
 import { PrivacyFilter } from '#components/PrivacyFilter';
 import { Cell, Field, Row, Table, TableHeader } from '#components/table';
@@ -114,7 +119,7 @@ export function ScheduleAmountCell({
   }
   return (
     <Cell
-      width={dashboard ? (highlighted ? 120 : 105) : 100}
+      width={dashboard ? (highlighted ? 140 : 135) : 100}
       plain
       style={{
         textAlign: 'right',
@@ -190,10 +195,14 @@ function ScheduleRow({
   statuses,
   dateFormat,
   dashboard,
+  payeesById,
+  accountsById,
 }: {
   schedule: ScheduleEntity;
   dateFormat: string;
   dashboard?: boolean;
+  payeesById: Map<PayeeEntity['id'], PayeeEntity>;
+  accountsById: Map<AccountEntity['id'], AccountEntity>;
 } & Pick<
   SchedulesTableProps,
   'onSelect' | 'onAction' | 'minimal' | 'statuses'
@@ -204,6 +213,8 @@ function ScheduleRow({
   const buttonRef = useRef(null);
 
   const status = statuses.get(schedule.id);
+  const payee = payeesById.get(schedule._payee);
+  const account = accountsById.get(schedule._account);
   useContextMenu({
     triggerRef: rowRef,
     items: !minimal
@@ -286,14 +297,53 @@ function ScheduleRow({
         name="payee"
         style={dashboard ? { flex: 0.9 } : undefined}
       >
-        <DisplayId type="payees" id={schedule._payee} />
+        {dashboard ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              minWidth: 0,
+            }}
+          >
+            {payee && (
+              <AccountLogo
+                logo={payee.logo}
+                name={payee.name}
+                size={28}
+                initials={Array.from(payee.name.trim())[0] || '?'}
+                fallbackBackgroundColor="#e7f1ff"
+                fallbackColor="#1769e0"
+              />
+            )}
+            <DisplayId type="payees" id={schedule._payee} />
+          </View>
+        ) : (
+          <DisplayId type="payees" id={schedule._payee} />
+        )}
       </Field>
       <Field
         width="flex"
         name="account"
         style={dashboard ? { flex: 1.05 } : undefined}
       >
-        <DisplayId type="accounts" id={schedule._account} />
+        {dashboard ? (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+              minWidth: 0,
+            }}
+          >
+            {account && (
+              <AccountLogo logo={account.logo} name={account.name} size={28} />
+            )}
+            <DisplayId type="accounts" id={schedule._account} />
+          </View>
+        ) : (
+          <DisplayId type="accounts" id={schedule._account} />
+        )}
       </Field>
       <Field width={dashboard ? 112 : 110} name="date" truncate={!dashboard}>
         {dashboard ? (
@@ -444,8 +494,16 @@ export function SchedulesTable({
     setShowCompleted(showCompletedByDefault ?? false);
   }, [showCompletedByDefault]);
 
-  const { data: payees } = usePayees();
+  const { data: payees = [] } = usePayees();
   const { data: accounts = [] } = useAccounts();
+  const payeesById = useMemo(
+    () => new Map(payees.map(payee => [payee.id, payee])),
+    [payees],
+  );
+  const accountsById = useMemo(
+    () => new Map(accounts.map(account => [account.id, account])),
+    [accounts],
+  );
 
   const filteredSchedules = useMemo(() => {
     if (!filter) {
@@ -530,7 +588,16 @@ export function SchedulesTable({
     return (
       <ScheduleRow
         schedule={item as ScheduleEntity}
-        {...{ statuses, dateFormat, onSelect, onAction, minimal, dashboard }}
+        {...{
+          statuses,
+          dateFormat,
+          onSelect,
+          onAction,
+          minimal,
+          dashboard,
+          payeesById,
+          accountsById,
+        }}
       />
     );
   }
@@ -578,11 +645,11 @@ export function SchedulesTable({
         <Field width={dashboard ? 110 : 120}>
           <Trans>Status</Trans>
         </Field>
-        <Field width={dashboard ? 105 : 100} style={{ textAlign: 'right' }}>
+        <Field width={dashboard ? 135 : 100} style={{ textAlign: 'right' }}>
           <Trans>Amount</Trans>
         </Field>
         {dashboard && (
-          <Field width={120} style={{ textAlign: 'center' }}>
+          <Field width={140} style={{ textAlign: 'center' }}>
             <Trans>Upcoming amount</Trans>
           </Field>
         )}

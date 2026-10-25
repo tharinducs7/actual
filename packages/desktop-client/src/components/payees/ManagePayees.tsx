@@ -48,6 +48,8 @@ function PayeeTableHeader() {
             dispatchSelected({ type: 'select-all', isRangeSelect: e.shiftKey })
           }
         />
+        <Cell value="" width={20} />
+        <Cell value="" width={34} />
         <Cell value={t('Name')} width="flex" />
       </TableHeader>
     </View>

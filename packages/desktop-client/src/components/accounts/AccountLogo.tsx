@@ -14,20 +14,31 @@ type AccountLogoProps = {
   logo?: string | null;
   name: string;
   size?: number;
+  initials?: string;
+  fallbackBackgroundColor?: string;
+  fallbackColor?: string;
 };
 
-export function AccountLogo({ logo, name, size = 20 }: AccountLogoProps) {
+export function AccountLogo({
+  logo,
+  name,
+  size = 20,
+  initials,
+  fallbackBackgroundColor = theme.sidebarItemBackgroundHover,
+  fallbackColor = theme.sidebarItemText,
+}: AccountLogoProps) {
   if (!logo) {
     const words = name.trim().split(/\s+/).filter(Boolean);
-    const initials =
-      words.length > 1
+    const fallbackInitials =
+      initials ??
+      (words.length > 1
         ? words
             .slice(0, 2)
             .map(word => Array.from(word)[0])
             .join('')
         : Array.from(words[0] ?? '')
             .slice(0, 2)
-            .join('') || '?';
+            .join('') || '?');
 
     return (
       <span
@@ -40,14 +51,14 @@ export function AccountLogo({ logo, name, size = 20 }: AccountLogoProps) {
           alignItems: 'center',
           justifyContent: 'center',
           borderRadius: '50%',
-          backgroundColor: theme.sidebarItemBackgroundHover,
-          color: theme.sidebarItemText,
+          backgroundColor: fallbackBackgroundColor,
+          color: fallbackColor,
           fontSize: Math.max(9, size * 0.45),
           fontWeight: 600,
           lineHeight: 1,
         }}
       >
-        {initials.toLocaleUpperCase()}
+        {fallbackInitials.toLocaleUpperCase()}
       </span>
     );
   }
@@ -71,9 +82,14 @@ export function AccountLogo({ logo, name, size = 20 }: AccountLogoProps) {
 type AccountLogoPickerProps = {
   value: string | null;
   onChange: (logo: string | null) => void;
+  name?: string;
 };
 
-export function AccountLogoPicker({ value, onChange }: AccountLogoPickerProps) {
+export function AccountLogoPicker({
+  value,
+  onChange,
+  name,
+}: AccountLogoPickerProps) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +138,11 @@ export function AccountLogoPicker({ value, onChange }: AccountLogoPickerProps) {
     <View style={{ gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         {value && (
-          <AccountLogo logo={value} name={t('Account logo')} size={32} />
+          <AccountLogo
+            logo={value}
+            name={name ?? t('Account logo')}
+            size={32}
+          />
         )}
         <input
           ref={inputRef}

@@ -12,6 +12,7 @@ import { theme } from '@actual-app/components/theme';
 import { Tooltip } from '@actual-app/components/tooltip';
 import type { PayeeEntity } from '@actual-app/core/types/models';
 
+import { AccountLogo } from '#components/accounts/AccountLogo';
 import {
   Cell,
   CellButton,
@@ -23,6 +24,8 @@ import {
 import { useContextMenu } from '#hooks/useContextMenu';
 import { useSelectedDispatch, useSelectedItems } from '#hooks/useSelected';
 import { useSyncedPref } from '#hooks/useSyncedPref';
+import { pushModal } from '#modals/modalsSlice';
+import { useDispatch } from '#redux';
 
 import { PayeeRuleCountLabel } from './PayeeRuleCountLabel';
 
@@ -106,6 +109,7 @@ export const PayeeTableRow = memo(
   }: PayeeTableRowProps) => {
     const { id } = payee;
     const dispatchSelected = useSelectedDispatch();
+    const dispatch = useDispatch();
     const selectedItems = useSelectedItems();
     const selectedIds = useMemo(() => {
       const ids =
@@ -126,6 +130,16 @@ export const PayeeTableRow = memo(
     useContextMenu({
       triggerRef,
       items: [
+        {
+          name: 'change-logo',
+          text: t('Change logo'),
+          onClick: () =>
+            dispatch(
+              pushModal({
+                modal: { name: 'payee-logo', options: { payeeId: id } },
+              }),
+            ),
+        },
         {
           name: 'delete',
           text: t('Delete'),
@@ -229,6 +243,21 @@ export const PayeeTableRow = memo(
             );
           }}
         </CustomCell>
+        <Cell
+          name="logo"
+          width={34}
+          plain
+          style={{ justifyContent: 'center', padding: '0 4px' }}
+        >
+          <AccountLogo
+            logo={payee.logo}
+            name={payee.name}
+            size={24}
+            initials={Array.from(payee.name.trim())[0] || '?'}
+            fallbackBackgroundColor="#e7f1ff"
+            fallbackColor="#1769e0"
+          />
+        </Cell>
         <InputCell
           value={(payee.transfer_acct ? t('Transfer: ') : '') + payee.name}
           valueStyle={

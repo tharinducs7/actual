@@ -16,6 +16,18 @@ beforeEach(async () => {
 });
 
 describe('payees app', () => {
+  it('persists payee logos', async () => {
+    const payeeId = await db.insertPayee({ name: 'Logo Payee' });
+    const logo = 'data:image/webp;base64,logo';
+
+    await app.handlers['payees-batch-change']({
+      updated: [{ id: payeeId, logo }],
+    });
+
+    const payee = await db.getPayee(payeeId);
+    expect(payee?.logo).toBe(logo);
+  });
+
   describe('payees-get-rule-counts', () => {
     it('counts payee rules but excludes rules linked to completed schedules', async () => {
       const activePayeeId = await db.insertPayee({ name: 'Active Payee' });

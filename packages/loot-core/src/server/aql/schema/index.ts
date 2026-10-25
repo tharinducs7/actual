@@ -60,6 +60,7 @@ export const schema = {
   payees: {
     id: f('id'),
     name: f('string', { required: true }),
+    logo: f('string'),
     transfer_acct: f('id', { ref: 'accounts' }),
     tombstone: f('boolean'),
     favorite: f('boolean'),

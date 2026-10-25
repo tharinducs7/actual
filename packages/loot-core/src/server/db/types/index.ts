@@ -132,6 +132,7 @@ export type DbPayeeMapping = {
 export type DbPayee = {
   id: string;
   name: string;
+  logo?: string | null;
   transfer_acct?: DbAccount['id'] | null;
   favorite: 1 | 0;
   learn_categories: 1 | 0;

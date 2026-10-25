@@ -127,7 +127,10 @@ export const categoryGroupModel = {
   },
 };
 
-export type APIPayeeEntity = Pick<PayeeEntity, 'id' | 'name' | 'transfer_acct'>;
+export type APIPayeeEntity = Pick<
+  PayeeEntity,
+  'id' | 'name' | 'logo' | 'transfer_acct'
+>;
 
 export const payeeModel = {
   ...models.payeeModel,
@@ -136,6 +139,7 @@ export const payeeModel = {
     return {
       id: payee.id,
       name: payee.name,
+      logo: payee.logo,
       transfer_acct: payee.transfer_acct,
     };
   },

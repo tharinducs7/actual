@@ -10,6 +10,7 @@ import type {
   NewRuleEntity,
   NewUserEntity,
   NoteEntity,
+  PayeeEntity,
   RuleEntity,
   ScheduleEntity,
   SyncServerEnableBankingAccount,
@@ -69,6 +70,12 @@ export type Modal =
       name: 'account-logo';
       options: {
         accountId: AccountEntity['id'];
+      };
+    }
+  | {
+      name: 'payee-logo';
+      options: {
+        payeeId: PayeeEntity['id'];
       };
     }
   | {
