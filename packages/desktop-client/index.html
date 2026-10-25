@@ -30,24 +30,29 @@
       html,
       body,
       button,
-      input {
+      input,
+      textarea,
+      select {
         font-family: var(
           --font-family,
-          'Inter Variable',
           -apple-system,
           BlinkMacSystemFont,
           'Segoe UI',
-          'Roboto',
-          'Oxygen',
-          'Ubuntu',
-          'Cantarell',
-          'Fira Sans',
-          'Droid Sans',
+          system-ui,
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
           'Helvetica Neue',
-          'Helvetica',
-          'Arial',
+          'Inter Variable',
           sans-serif
         );
+      }
+
+      html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
       }
 
       a {
@@ -78,23 +83,6 @@
       input,
       textarea {
         font-size: 1em;
-        font-family: var(
-          --font-family,
-          'Inter Variable',
-          -apple-system,
-          BlinkMacSystemFont,
-          'Segoe UI',
-          'Roboto',
-          'Oxygen',
-          'Ubuntu',
-          'Cantarell',
-          'Fira Sans',
-          'Droid Sans',
-          'Helvetica Neue',
-          'Helvetica',
-          'Arial',
-          sans-serif
-        );
         font-feature-settings:
           'ss01',
           'ss04',

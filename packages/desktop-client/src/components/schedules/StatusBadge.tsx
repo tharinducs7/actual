@@ -92,15 +92,35 @@ export function getStatusProps(status: StatusTypes | null | undefined) {
   }
 }
 
-export function StatusBadge({ status }: { status: ScheduleStatusType }) {
-  const { color, backgroundColor, Icon } = getStatusProps(status);
+export function StatusBadge({
+  status,
+  dashboard = false,
+}: {
+  status: ScheduleStatusType;
+  dashboard?: boolean;
+}) {
+  const statusProps = getStatusProps(status);
+  const dashboardColor =
+    status === 'due'
+      ? { color: '#9a6700', backgroundColor: '#fff3c4' }
+      : status === 'missed'
+        ? { color: '#b42332', backgroundColor: '#ffebed' }
+        : status === 'completed'
+          ? { color: '#5f6f86', backgroundColor: '#edf1f7' }
+          : status === 'paid'
+            ? { color: '#177245', backgroundColor: '#e7f7ee' }
+            : { color: '#1769e0', backgroundColor: '#e7f1ff' };
+  const { color, backgroundColor, Icon } = dashboard
+    ? { ...statusProps, ...dashboardColor }
+    : statusProps;
   return (
     <View
       style={{
         color,
         backgroundColor,
-        padding: '6px 8px',
+        padding: dashboard ? '6px 8px' : '6px 8px',
         borderRadius: 4,
+        fontSize: dashboard ? 11 : undefined,
         flexDirection: 'row',
         alignItems: 'center',
         flexShrink: 0,
@@ -111,6 +131,7 @@ export function StatusBadge({ status }: { status: ScheduleStatusType }) {
           width: 13,
           height: 13,
           marginRight: 7,
+          color,
         }}
       />
       <Text style={{ lineHeight: '1em' }}>

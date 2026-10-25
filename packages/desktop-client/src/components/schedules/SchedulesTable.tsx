@@ -1,5 +1,5 @@
 // @ts-strict-ignore
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
@@ -10,7 +10,11 @@ import { styles } from '@actual-app/components/styles';
 import { Text } from '@actual-app/components/text';
 import { theme } from '@actual-app/components/theme';
 import { View } from '@actual-app/components/view';
-import { format as monthUtilFormat } from '@actual-app/core/shared/months';
+import {
+  currentDay,
+  differenceInCalendarDays,
+  format as monthUtilFormat,
+} from '@actual-app/core/shared/months';
 import { getNormalisedString } from '@actual-app/core/shared/normalisation';
 import { getScheduledAmount } from '@actual-app/core/shared/schedules';
 import type { ScheduleStatuses } from '@actual-app/core/shared/schedules';
@@ -36,6 +40,8 @@ type SchedulesTableProps = {
   onSelect: (id: ScheduleEntity['id']) => void;
   style: CSSProperties;
   tableStyle?: CSSProperties;
+  dashboard?: boolean;
+  showCompletedByDefault?: boolean;
 } & (
   | {
       minimal: true;
@@ -62,13 +68,29 @@ export type ScheduleItemAction =
   | 'delete';
 
 export const ROW_HEIGHT = 43;
+const DASHBOARD_ROW_HEIGHT = 64;
+const DASHBOARD_COLORS = {
+  text: '#24324a',
+  mutedText: '#65748b',
+  border: '#e5ebf5',
+  tableHeader: '#f1f4f9',
+  rowHover: '#f7f9fd',
+  upcomingBackground: '#edf5ff',
+  upcomingBorder: '#d9e9ff',
+};
 
 export function ScheduleAmountCell({
   amount,
   op,
+  name = 'amount',
+  highlighted = false,
+  dashboard = false,
 }: {
   amount: ScheduleEntity['_amount'];
   op: ScheduleEntity['_amountOp'];
+  name?: string;
+  highlighted?: boolean;
+  dashboard?: boolean;
 }) {
   const { t } = useTranslation();
   const format = useFormat();
@@ -92,15 +114,21 @@ export function ScheduleAmountCell({
   }
   return (
     <Cell
-      width={100}
+      width={dashboard ? (highlighted ? 120 : 105) : 100}
       plain
       style={{
         textAlign: 'right',
         flexDirection: 'row',
         alignItems: 'center',
         padding: '0 5px',
+        ...(highlighted && {
+          margin: '6px 0',
+          borderRadius: 8,
+          border: `1px solid ${DASHBOARD_COLORS.upcomingBorder}`,
+          backgroundColor: DASHBOARD_COLORS.upcomingBackground,
+        }),
       }}
-      name="amount"
+      name={name}
     >
       {isApprox && (
         <View
@@ -131,7 +159,15 @@ export function ScheduleAmountCell({
       <FinancialText
         style={{
           flex: 1,
-          color: num > 0 ? theme.noticeTextLight : theme.tableText,
+          color:
+            num > 0
+              ? dashboard
+                ? '#177245'
+                : theme.noticeTextLight
+              : dashboard
+                ? DASHBOARD_COLORS.text
+                : theme.tableText,
+          fontWeight: dashboard ? 600 : undefined,
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
@@ -153,9 +189,11 @@ function ScheduleRow({
   minimal,
   statuses,
   dateFormat,
+  dashboard,
 }: {
   schedule: ScheduleEntity;
   dateFormat: string;
+  dashboard?: boolean;
 } & Pick<
   SchedulesTableProps,
   'onSelect' | 'onAction' | 'minimal' | 'statuses'
@@ -210,17 +248,28 @@ function ScheduleRow({
   return (
     <Row
       ref={rowRef}
-      height={ROW_HEIGHT}
+      height={dashboard ? DASHBOARD_ROW_HEIGHT : ROW_HEIGHT}
       inset={15}
       onClick={() => onSelect(schedule.id)}
       style={{
         cursor: 'pointer',
-        backgroundColor: theme.tableBackground,
-        color: theme.tableText,
-        ':hover': { backgroundColor: theme.tableRowBackgroundHover },
+        backgroundColor: dashboard ? '#ffffff' : theme.tableBackground,
+        color: dashboard ? DASHBOARD_COLORS.text : theme.tableText,
+        borderBottom: dashboard
+          ? `1px solid ${DASHBOARD_COLORS.border}`
+          : undefined,
+        ':hover': {
+          backgroundColor: dashboard
+            ? DASHBOARD_COLORS.rowHover
+            : theme.tableRowBackgroundHover,
+        },
       }}
     >
-      <Field width="flex" name="name">
+      <Field
+        width="flex"
+        name="name"
+        style={dashboard ? { flex: 1.15 } : undefined}
+      >
         <Text
           style={
             schedule.name == null
@@ -232,27 +281,105 @@ function ScheduleRow({
           {schedule.name ? schedule.name : t('None')}
         </Text>
       </Field>
-      <Field width="flex" name="payee">
+      <Field
+        width="flex"
+        name="payee"
+        style={dashboard ? { flex: 0.9 } : undefined}
+      >
         <DisplayId type="payees" id={schedule._payee} />
       </Field>
-      <Field width="flex" name="account">
+      <Field
+        width="flex"
+        name="account"
+        style={dashboard ? { flex: 1.05 } : undefined}
+      >
         <DisplayId type="accounts" id={schedule._account} />
       </Field>
-      <Field width={110} name="date">
-        {schedule.next_date
-          ? monthUtilFormat(schedule.next_date, dateFormat)
-          : null}
+      <Field width={dashboard ? 112 : 110} name="date" truncate={!dashboard}>
+        {dashboard ? (
+          <View style={{ gap: 3 }}>
+            <Text>
+              {schedule.next_date
+                ? monthUtilFormat(schedule.next_date, dateFormat)
+                : null}
+            </Text>
+            {schedule.next_date && (
+              <Text style={{ color: theme.pageTextLight, fontSize: 11 }}>
+                {differenceInCalendarDays(schedule.next_date, currentDay()) < 0
+                  ? t('{{count}} days ago', {
+                      count: Math.abs(
+                        differenceInCalendarDays(
+                          schedule.next_date,
+                          currentDay(),
+                        ),
+                      ),
+                    })
+                  : differenceInCalendarDays(
+                        schedule.next_date,
+                        currentDay(),
+                      ) === 0
+                    ? t('Today')
+                    : t('in {{count}} days', {
+                        count: differenceInCalendarDays(
+                          schedule.next_date,
+                          currentDay(),
+                        ),
+                      })}
+              </Text>
+            )}
+          </View>
+        ) : schedule.next_date ? (
+          monthUtilFormat(schedule.next_date, dateFormat)
+        ) : null}
       </Field>
-      <Field width={120} name="status" style={{ alignItems: 'flex-start' }}>
-        <StatusBadge status={statuses.get(schedule.id)} />
+      <Field
+        width={dashboard ? 110 : 120}
+        name="status"
+        style={{ alignItems: 'flex-start' }}
+      >
+        <StatusBadge status={statuses.get(schedule.id)} dashboard={dashboard} />
       </Field>
-      <ScheduleAmountCell amount={schedule._amount} op={schedule._amountOp} />
+      <ScheduleAmountCell
+        amount={schedule._amount}
+        op={schedule._amountOp}
+        dashboard={dashboard}
+      />
+      {dashboard && (
+        <ScheduleAmountCell
+          amount={schedule._amount}
+          op={schedule._amountOp}
+          name="upcoming-amount"
+          highlighted
+          dashboard
+        />
+      )}
       {!minimal && (
-        <Field width={80} style={{ textAlign: 'center' }}>
+        <Field
+          width={dashboard ? 82 : 80}
+          style={{
+            textAlign: 'center',
+            ...(dashboard && { color: '#177245' }),
+          }}
+        >
           {schedule._date &&
             typeof schedule._date === 'object' &&
             schedule._date.frequency && (
-              <SvgCheck style={{ width: 13, height: 13 }} />
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                }}
+              >
+                <SvgCheck
+                  style={{
+                    width: 13,
+                    height: 13,
+                    color: dashboard ? theme.noticeText : undefined,
+                  }}
+                />
+                {dashboard && <Trans>Yes</Trans>}
+              </View>
             )}
         </Field>
       )}
@@ -302,12 +429,20 @@ export function SchedulesTable({
   onSelect,
   onAction,
   tableStyle,
+  dashboard,
+  showCompletedByDefault,
 }: SchedulesTableProps) {
   const { t } = useTranslation();
   const format = useFormat();
 
   const dateFormat = useDateFormat() || 'MM/dd/yyyy';
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(
+    showCompletedByDefault ?? false,
+  );
+
+  useEffect(() => {
+    setShowCompleted(showCompletedByDefault ?? false);
+  }, [showCompletedByDefault]);
 
   const { data: payees } = usePayees();
   const { data: accounts = [] } = useAccounts();
@@ -370,7 +505,7 @@ export function SchedulesTable({
     if (item.id === 'show-completed') {
       return (
         <Row
-          height={ROW_HEIGHT}
+          height={dashboard ? DASHBOARD_ROW_HEIGHT : ROW_HEIGHT}
           inset={15}
           style={{
             cursor: 'pointer',
@@ -395,34 +530,64 @@ export function SchedulesTable({
     return (
       <ScheduleRow
         schedule={item as ScheduleEntity}
-        {...{ statuses, dateFormat, onSelect, onAction, minimal }}
+        {...{ statuses, dateFormat, onSelect, onAction, minimal, dashboard }}
       />
     );
   }
 
   return (
-    <View style={{ ...styles.tableContainer, ...tableStyle }}>
-      <TableHeader height={ROW_HEIGHT} inset={15}>
-        <Field width="flex">
+    <View
+      style={{
+        ...styles.tableContainer,
+        ...tableStyle,
+        ...(dashboard && {
+          '& [data-testid="row"] > div': {
+            borderColor: DASHBOARD_COLORS.border,
+          },
+        }),
+      }}
+    >
+      <TableHeader
+        height={dashboard ? 40 : ROW_HEIGHT}
+        inset={15}
+        style={
+          dashboard
+            ? {
+                textTransform: 'uppercase',
+                fontSize: 10,
+                fontWeight: 700,
+                borderRadius: 6,
+                color: DASHBOARD_COLORS.mutedText,
+                backgroundColor: DASHBOARD_COLORS.tableHeader,
+              }
+            : undefined
+        }
+      >
+        <Field width="flex" style={dashboard ? { flex: 1.15 } : undefined}>
           <Trans>Name</Trans>
         </Field>
-        <Field width="flex">
+        <Field width="flex" style={dashboard ? { flex: 0.9 } : undefined}>
           <Trans>Payee</Trans>
         </Field>
-        <Field width="flex">
+        <Field width="flex" style={dashboard ? { flex: 1.05 } : undefined}>
           <Trans>Account</Trans>
         </Field>
-        <Field width={110}>
+        <Field width={dashboard ? 112 : 110}>
           <Trans>Next date</Trans>
         </Field>
-        <Field width={120}>
+        <Field width={dashboard ? 110 : 120}>
           <Trans>Status</Trans>
         </Field>
-        <Field width={100} style={{ textAlign: 'right' }}>
+        <Field width={dashboard ? 105 : 100} style={{ textAlign: 'right' }}>
           <Trans>Amount</Trans>
         </Field>
+        {dashboard && (
+          <Field width={120} style={{ textAlign: 'center' }}>
+            <Trans>Upcoming amount</Trans>
+          </Field>
+        )}
         {!minimal && (
-          <Field width={80} style={{ textAlign: 'center' }}>
+          <Field width={dashboard ? 82 : 80} style={{ textAlign: 'center' }}>
             <Trans>Recurring</Trans>
           </Field>
         )}
@@ -430,9 +595,14 @@ export function SchedulesTable({
       </TableHeader>
       <Table
         loading={isLoading}
-        rowHeight={ROW_HEIGHT}
         backgroundColor="transparent"
-        style={{ flex: 1, backgroundColor: 'transparent', ...style }}
+        rowHeight={dashboard ? DASHBOARD_ROW_HEIGHT : ROW_HEIGHT}
+        style={{
+          flex: 1,
+          backgroundColor: 'transparent',
+          overflowX: dashboard ? 'auto' : undefined,
+          ...style,
+        }}
         items={items as ScheduleEntity[]}
         renderItem={renderItem}
         renderEmpty={filter ? t('No matching schedules') : t('No schedules')}
